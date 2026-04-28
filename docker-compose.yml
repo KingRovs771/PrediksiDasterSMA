@@ -5,7 +5,7 @@ services:
     build: .
     container_name: prediksi_daster_web_local
     ports:
-      - "8000:80"
+      - "8090:8090"
     volumes:
       - ./:/var/www/html # Mengarahkan folder root lokal Anda ke dalam web server
     depends_on:
@@ -15,7 +15,7 @@ services:
     image: mysql:8.0
     container_name: prediksi_daster_db_local
     ports:
-      - "3306:3306"
+      - "8091:8091"
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: prediksi_daster_collection
@@ -28,7 +28,7 @@ services:
     image: phpmyadmin/phpmyadmin
     container_name: prediksi_daster_pma_local
     ports:
-      - "8080:80"
+      - "8092:8092"
     environment:
       PMA_HOST: db
       MYSQL_ROOT_PASSWORD: rootpassword
