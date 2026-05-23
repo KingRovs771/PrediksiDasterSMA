@@ -24,16 +24,75 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Struktur dari tabel `kategori`
+--
+
+CREATE TABLE `kategori` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `nama_kategori` varchar(50) NOT NULL UNIQUE,
+  `deskripsi` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data untuk tabel `kategori`
+--
+
+INSERT INTO `kategori` (`id`, `nama_kategori`, `deskripsi`, `created_at`, `updated_at`) VALUES
+(1, 'Daster', 'Kategori produk daster standar', '2026-04-15 01:14:00', '2026-04-15 01:14:00');
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `data_produk`
+--
+
+CREATE TABLE `data_produk` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `kode_produk` varchar(50) NOT NULL,
+  `nama_produk` varchar(100) NOT NULL,
+  `kategori_id` int NOT NULL,
+  `harga` decimal(10,2) NOT NULL,
+  `stok` int DEFAULT '0',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `kode_produk` (`kode_produk`),
+  KEY `idx_kode` (`kode_produk`),
+  KEY `kategori_id` (`kategori_id`),
+  CONSTRAINT `fk_produk_kategori` FOREIGN KEY (`kategori_id`) REFERENCES `kategori` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data untuk tabel `data_produk`
+--
+
+INSERT INTO `data_produk` (`id`, `kode_produk`, `nama_produk`, `kategori_id`, `harga`, `stok`, `created_at`, `updated_at`) VALUES
+(1, 'DST-001', 'Daster Motif Bunga', 1, 20000.00, 207, '2026-04-15 01:14:38', '2026-04-15 02:55:16'),
+(2, 'DST-002', 'Daster Motif Dinosaurus', 1, 10000.00, 700, '2026-04-15 02:52:39', '2026-04-15 02:52:39'),
+(4, 'DST-003', 'Daster Motif Bunga Kamboja', 1, 8000.00, 400, '2026-04-15 02:53:47', '2026-04-15 02:55:03');
+
+-- --------------------------------------------------------
+
+--
 -- Struktur dari tabel `data_penjualan`
 --
 
 CREATE TABLE `data_penjualan` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `produk_id` int NOT NULL,
   `tanggal` date NOT NULL,
   `jumlah_terjual` int NOT NULL,
   `user_id` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `produk_id` (`produk_id`),
+  KEY `user_id` (`user_id`),
+  KEY `idx_tanggal` (`tanggal`),
+  CONSTRAINT `data_penjualan_ibfk_1` FOREIGN KEY (`produk_id`) REFERENCES `data_produk` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `data_penjualan_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -71,43 +130,20 @@ INSERT INTO `data_penjualan` (`id`, `produk_id`, `tanggal`, `jumlah_terjual`, `u
 -- --------------------------------------------------------
 
 --
--- Struktur dari tabel `data_produk`
---
-
-CREATE TABLE `data_produk` (
-  `id` int NOT NULL,
-  `kode_produk` varchar(50) NOT NULL,
-  `nama_produk` varchar(100) NOT NULL,
-  `kategori` varchar(50) DEFAULT 'Daster',
-  `harga` decimal(10,2) NOT NULL,
-  `stok` int DEFAULT '0',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data untuk tabel `data_produk`
---
-
-INSERT INTO `data_produk` (`id`, `kode_produk`, `nama_produk`, `kategori`, `harga`, `stok`, `created_at`, `updated_at`) VALUES
-(1, 'DST-001', 'Daster Motif Bunga', 'Daster', 20000.00, 207, '2026-04-15 01:14:38', '2026-04-15 02:55:16'),
-(2, 'DST-002', 'Daster Motif Dinosaurus', 'Daster', 10000.00, 700, '2026-04-15 02:52:39', '2026-04-15 02:52:39'),
-(4, 'DST-003', 'Daster Motif Bunga Kamboja', 'Daster', 8000.00, 400, '2026-04-15 02:53:47', '2026-04-15 02:55:03');
-
--- --------------------------------------------------------
-
---
 -- Struktur dari tabel `prediksi_log`
 --
 
 CREATE TABLE `prediksi_log` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `periode_n` int NOT NULL,
   `prediksi_bulan` varchar(7) NOT NULL,
   `nilai_prediksi` decimal(10,2) NOT NULL,
   `mape` decimal(5,2) NOT NULL,
   `user_id` int NOT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `prediksi_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -117,14 +153,19 @@ CREATE TABLE `prediksi_log` (
 --
 
 CREATE TABLE `users` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `role` enum('admin','staff') DEFAULT 'staff',
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`),
+  KEY `idx_username` (`username`),
+  KEY `idx_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -134,88 +175,6 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `username`, `email`, `password`, `role`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'admin_tivayo', 'admin@tivayo.com', '$2y$10$cdJYLKsNkLqBa38qpfhonufvCXPtl0hetZWJj.3/LUHsByZulz.SW', 'admin', 1, '2026-04-14 01:19:29', '2026-04-15 01:14:08');
 
---
--- Indeks untuk tabel yang dibuang
---
-
---
--- Indeks untuk tabel `data_penjualan`
---
-ALTER TABLE `data_penjualan`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `produk_id` (`produk_id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `idx_tanggal` (`tanggal`);
-
---
--- Indeks untuk tabel `data_produk`
---
-ALTER TABLE `data_produk`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `kode_produk` (`kode_produk`),
-  ADD KEY `idx_kode` (`kode_produk`);
-
---
--- Indeks untuk tabel `prediksi_log`
---
-ALTER TABLE `prediksi_log`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`);
-
---
--- Indeks untuk tabel `users`
---
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `username` (`username`),
-  ADD UNIQUE KEY `email` (`email`),
-  ADD KEY `idx_username` (`username`),
-  ADD KEY `idx_email` (`email`);
-
---
--- AUTO_INCREMENT untuk tabel yang dibuang
---
-
---
--- AUTO_INCREMENT untuk tabel `data_penjualan`
---
-ALTER TABLE `data_penjualan`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
-
---
--- AUTO_INCREMENT untuk tabel `data_produk`
---
-ALTER TABLE `data_produk`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT untuk tabel `prediksi_log`
---
-ALTER TABLE `prediksi_log`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT untuk tabel `users`
---
-ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
---
-
---
--- Ketidakleluasaan untuk tabel `data_penjualan`
---
-ALTER TABLE `data_penjualan`
-  ADD CONSTRAINT `data_penjualan_ibfk_1` FOREIGN KEY (`produk_id`) REFERENCES `data_produk` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `data_penjualan_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Ketidakleluasaan untuk tabel `prediksi_log`
---
-ALTER TABLE `prediksi_log`
-  ADD CONSTRAINT `prediksi_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../../models/Penjualan.php';
 $model = new Penjualan();
 $dataBulanan = $model->getGrafikBulanan();
 $dataPerVarian = $model->getGrafikPerVarian();
+$dataPerKategori = $model->getGrafikPerKategori();
 
 // Siapkan data untuk line chart (penjualan per bulan)
 $labelsBulanan = array_column($dataBulanan, 'bulan_label');
@@ -14,15 +15,20 @@ $totalsBulanan = array_map('intval', array_column($dataBulanan, 'total'));
 $labelsVarian = array_column($dataPerVarian, 'varian');
 $totalsVarian = array_map('intval', array_column($dataPerVarian, 'total'));
 
+// Siapkan data untuk doughnut chart (per kategori)
+$labelsKategori = array_column($dataPerKategori, 'kategori');
+$totalsKategori = array_map('intval', array_column($dataPerKategori, 'total'));
+
 // Palet warna dinamis
 $palette = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#a855f7', '#14b8a6', '#f97316', '#ec4899', '#84cc16'];
 $warnaDoughnut = array_slice(array_merge($palette, $palette), 0, count($labelsVarian));
+$warnaKategori = array_slice(array_merge($palette, $palette), 0, count($labelsKategori));
 
 $tahunAktif = !empty($labelsBulanan) ? date('Y') : date('Y');
 ?>
 <main class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom px-4 sticky-top shadow-sm">
-        <h5 class="mb-0 fw-bold">Grafik Penjualan</h5>
+        <h5 class="mb-0 fw-bold">Grafik Analisis Penjualan</h5>
     </nav>
 
     <div class="container-fluid p-4">
@@ -54,22 +60,45 @@ $tahunAktif = !empty($labelsBulanan) ? date('Y') : date('Y');
                 </div>
             </div>
 
-            <!-- Doughnut Chart: Per Varian -->
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
+            <!-- Doughnut Chart: Per Kategori Daster -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3">
                         <h6 class="mb-0 fw-semibold">
-                            <i class="bi bi-pie-chart me-2 text-primary"></i>Penjualan per Varian Produk
+                            <i class="bi bi-pie-chart me-2 text-primary"></i>Penjualan per Kategori Daster
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <?php if (empty($dataPerKategori)): ?>
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-pie-chart fs-1 opacity-25 d-block mb-2"></i>
+                                Belum ada data kategori
+                            </div>
+                        <?php else: ?>
+                            <div style="height: 320px;">
+                                <canvas id="kategoriChart"></canvas>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Doughnut Chart: Per Varian -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-semibold">
+                            <i class="bi bi-pie-chart-fill me-2 text-primary"></i>Penjualan per Varian Produk
                         </h6>
                     </div>
                     <div class="card-body">
                         <?php if (empty($dataPerVarian)): ?>
                             <div class="text-center text-muted py-5">
                                 <i class="bi bi-pie-chart fs-1 opacity-25 d-block mb-2"></i>
-                                Belum ada data
+                                Belum ada data varian produk
                             </div>
                         <?php else: ?>
-                            <div style="height: 350px;">
+                            <div style="height: 320px;">
                                 <canvas id="variantChart"></canvas>
                             </div>
                         <?php endif; ?>
@@ -88,7 +117,10 @@ $tahunAktif = !empty($labelsBulanan) ? date('Y') : date('Y');
     const labelsVarian = <?php echo json_encode($labelsVarian); ?>;
     const totalsVarian = <?php echo json_encode($totalsVarian); ?>;
     const warnaDoughnut = <?php echo json_encode($warnaDoughnut); ?>;
-
+    
+    const labelsKategori = <?php echo json_encode($labelsKategori); ?>;
+    const totalsKategori = <?php echo json_encode($totalsKategori); ?>;
+    const warnaKategori = <?php echo json_encode($warnaKategori); ?>;
 
     Chart.defaults.font.family = "'Segoe UI', sans-serif";
 
@@ -121,7 +153,30 @@ $tahunAktif = !empty($labelsBulanan) ? date('Y') : date('Y');
         });
     }
 
-    // 2. Doughnut Chart – Per varian
+    // 2. Doughnut Chart – Per Kategori
+    if (document.getElementById('kategoriChart') && labelsKategori.length > 0) {
+        new Chart(document.getElementById('kategoriChart'), {
+            type: 'doughnut',
+            data: {
+                labels: labelsKategori,
+                datasets: [{
+                    data: totalsKategori,
+                    backgroundColor: warnaKategori,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 12 } }
+                }
+            }
+        });
+    }
+
+    // 3. Doughnut Chart – Per varian
     if (document.getElementById('variantChart') && labelsVarian.length > 0) {
         new Chart(document.getElementById('variantChart'), {
             type: 'doughnut',

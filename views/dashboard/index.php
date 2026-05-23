@@ -82,6 +82,8 @@ require_once __DIR__ . '/../../core/auth_guard.php';
             <a href="index.php?page=dashboard"
                 class="nav-link <?php echo ($page === 'dashboard') ? 'active' : ''; ?>"><i
                     class="bi bi-grid-1x2-fill me-2"></i>Dashboard</a>
+            <a href="index.php?page=kategori" class="nav-link <?php echo ($page === 'kategori') ? 'active' : ''; ?>"><i
+                    class="bi bi-tags me-2"></i>Kategori Daster</a>
             <a href="index.php?page=produk" class="nav-link <?php echo ($page === 'produk') ? 'active' : ''; ?>"><i
                     class="bi bi-box-seam me-2"></i>Data Produk</a>
             <a href="index.php?page=penjualan"
@@ -98,6 +100,8 @@ require_once __DIR__ . '/../../core/auth_guard.php';
         <?php require_once __DIR__ . '/penjualan/penjualan.php'; ?>
     <?php elseif ($page === 'produk'): ?>
         <?php require_once __DIR__ . '/produk/produk.php'; ?>
+    <?php elseif ($page === 'kategori'): ?>
+        <?php require_once __DIR__ . '/kategori/kategori.php'; ?>
     <?php elseif ($page === 'grafik'): ?>
         <?php require_once __DIR__ . '/laporan/laporan.php'; ?>
     <?php elseif ($page === 'prediksi'): ?>

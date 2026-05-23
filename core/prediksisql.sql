@@ -14,17 +14,27 @@ CREATE TABLE users (
     INDEX idx_email (email)
 ) ENGINE=InnoDB;
 
+-- Tabel Kategori
+CREATE TABLE kategori (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nama_kategori VARCHAR(50) UNIQUE NOT NULL,
+    deskripsi VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- Tabel Data Produk
 CREATE TABLE data_produk (
     id INT AUTO_INCREMENT PRIMARY KEY,
     kode_produk VARCHAR(50) UNIQUE NOT NULL,
     nama_produk VARCHAR(100) NOT NULL,
-    kategori VARCHAR(50) DEFAULT 'Daster',
+    kategori_id INT NOT NULL,
     harga DECIMAL(10,2) NOT NULL,
     stok INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_kode (kode_produk)
+    INDEX idx_kode (kode_produk),
+    FOREIGN KEY (kategori_id) REFERENCES kategori(id) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB;
 
 -- Tabel Data Penjualan
@@ -53,6 +63,9 @@ CREATE TABLE prediksi_log (
 ) ENGINE=InnoDB;
 
 -- Insert Admin Default (Password: admin123)
--- 💡 Untuk generate hash baru: <?php echo password_hash('password_baru', PASSWORD_DEFAULT); ?>
 INSERT INTO users (username, email, password, role) VALUES
 ('admin_tivayo', 'admin@tivayo.com', '$2y$10$cdJYLKsNkLqBa38qpfhonufvCXPtl0hetZWJj.3/LUHsByZulz.SW', 'admin');
+
+-- Insert Kategori Default
+INSERT INTO kategori (nama_kategori, deskripsi) VALUES
+('Daster', 'Kategori produk daster standar');

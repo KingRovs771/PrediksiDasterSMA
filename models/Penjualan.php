@@ -83,6 +83,25 @@ class Penjualan
     }
 
     /**
+     * Ambil total penjualan per kategori produk (untuk doughnut chart)
+     * Format: [{ kategori: 'Daster Arab', total: 551 }, ...]
+     */
+    public function getGrafikPerKategori()
+    {
+        $this->db->query("
+            SELECT 
+                k.nama_kategori as kategori,
+                SUM(dp.jumlah_terjual) as total
+            FROM data_penjualan dp
+            JOIN data_produk pr ON dp.produk_id = pr.id
+            JOIN kategori k ON pr.kategori_id = k.id
+            GROUP BY k.id, k.nama_kategori
+            ORDER BY total DESC
+        ");
+        return $this->db->resultSet();
+    }
+
+    /**
      * Ambil total penjualan per bulan per varian (untuk halaman prediksi)
      * Format: [{ bulan: 'YYYY-MM', bulan_label: 'Januari 2025', varian: 'Motif Bunga', total: 120 }, ...]
      */
@@ -97,6 +116,27 @@ class Penjualan
             FROM data_penjualan dp
             JOIN data_produk pr ON dp.produk_id = pr.id
             GROUP BY bulan, bulan_label, pr.id, pr.nama_produk
+            ORDER BY bulan ASC
+        ");
+        return $this->db->resultSet();
+    }
+
+    /**
+     * Ambil total penjualan per bulan per kategori (untuk halaman prediksi by kategori daster)
+     * Format: [{ bulan: 'YYYY-MM', bulan_label: 'Januari 2025', kategori: 'Daster Arab', total: 120 }, ...]
+     */
+    public function getPenjualanBulananPerKategori()
+    {
+        $this->db->query("
+            SELECT 
+                DATE_FORMAT(dp.tanggal, '%Y-%m') as bulan,
+                DATE_FORMAT(dp.tanggal, '%M %Y') as bulan_label,
+                k.nama_kategori as kategori,
+                SUM(dp.jumlah_terjual) as total
+            FROM data_penjualan dp
+            JOIN data_produk pr ON dp.produk_id = pr.id
+            JOIN kategori k ON pr.kategori_id = k.id
+            GROUP BY bulan, bulan_label, k.id, k.nama_kategori
             ORDER BY bulan ASC
         ");
         return $this->db->resultSet();

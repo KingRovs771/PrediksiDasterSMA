@@ -1,8 +1,11 @@
 <?php
 require_once __DIR__ . '/../../../core/auth_guard.php';
 require_once __DIR__ . '/../../../models/Produk.php';
+require_once __DIR__ . '/../../../models/Kategori.php';
 $model = new Produk();
+$katModel = new Kategori();
 $dataProduk = $model->getAllProduk();
+$categories = $katModel->getAllKategori();
 ?>
 <main class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom px-4 sticky-top shadow-sm">
@@ -117,8 +120,13 @@ $dataProduk = $model->getAllProduk();
                         placeholder="Cth: Daster Motif Kelelawar">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Kategori</label>
-                    <input type="text" name="kategori" class="form-control" value="Daster">
+                    <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                    <select name="kategori_id" class="form-select" required>
+                        <option value="">Pilih Kategori</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo $cat['id']; ?>"><?php echo htmlspecialchars($cat['nama_kategori']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -158,8 +166,13 @@ $dataProduk = $model->getAllProduk();
                     <input type="text" name="nama_produk" id="edit_nama_produk" class="form-control" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Kategori</label>
-                    <input type="text" name="kategori" id="edit_kategori" class="form-control">
+                    <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                    <select name="kategori_id" id="edit_kategori_id" class="form-select" required>
+                        <option value="">Pilih Kategori</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo $cat['id']; ?>"><?php echo htmlspecialchars($cat['nama_kategori']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -185,7 +198,7 @@ $dataProduk = $model->getAllProduk();
         document.getElementById('edit_id').value = data.id;
         document.getElementById('edit_kode_produk').value = data.kode_produk;
         document.getElementById('edit_nama_produk').value = data.nama_produk;
-        document.getElementById('edit_kategori').value = data.kategori;
+        document.getElementById('edit_kategori_id').value = data.kategori_id;
         document.getElementById('edit_harga').value = data.harga;
         document.getElementById('edit_stok').value = data.stok;
     }

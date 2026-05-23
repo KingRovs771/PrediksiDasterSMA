@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../../core/auth_guard.php';
 require_once __DIR__ . '/../../../models/Penjualan.php';
 
 $model = new Penjualan();
-$rawData = $model->getPenjualanBulananPerVarian();
+$rawData = $model->getPenjualanBulananPerKategori();
 
 // Konversi nama bulan Inggris → Indonesia dari DB
 $bulanMap = [
@@ -13,23 +13,24 @@ $bulanMap = [
     'October' => 'Oktober', 'November' => 'November', 'December' => 'Desember',
 ];
 
-// Susun data per varian: { 'Motif Bunga' => [{ bulan:'YYYY-MM', label:'Januari 2025', total:120 }, ...] }
-$dataByVarian = [];
+// Susun data per kategori: { 'Daster Arab' => [{ bulan:'YYYY-MM', label:'Januari 2025', total:120 }, ...] }
+$dataByKategori = [];
 foreach ($rawData as $row) {
-    $v = $row['varian'];
-    if (!isset($dataByVarian[$v])) {
-        $dataByVarian[$v] = [];
+    $k = $row['kategori'];
+    if (empty($k)) continue;
+    if (!isset($dataByKategori[$k])) {
+        $dataByKategori[$k] = [];
     }
     // Terjemahkan nama bulan
     $parts = explode(' ', $row['bulan_label'], 2); // "January 2025"
     $labelIndo = ($bulanMap[$parts[0]] ?? $parts[0]) . ' ' . ($parts[1] ?? '');
-    $dataByVarian[$v][] = [
+    $dataByKategori[$k][] = [
         'bulan'  => $row['bulan'],        // YYYY-MM
         'label'  => $labelIndo,           // "Januari 2025"
         'total'  => (int) $row['total'],
     ];
 }
-$varianList = array_keys($dataByVarian);
+$kategoriList = array_keys($dataByKategori);
 
 // Cari bulan min dan max dari semua data
 $allBulan = array_column($rawData, 'bulan');
@@ -38,34 +39,34 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 ?>
 <main class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom px-4 sticky-top shadow-sm">
-        <h5 class="mb-0 fw-bold">Hitung Prediksi – Single Moving Average (SMA)</h5>
+        <h5 class="mb-0 fw-bold">Hitung Prediksi Kategori – Single Moving Average (SMA)</h5>
     </nav>
 
     <div class="container-fluid p-4">
 
-        <?php if (empty($varianList)): ?>
+        <?php if (empty($kategoriList)): ?>
             <div class="alert alert-warning d-flex align-items-center gap-2 shadow-sm">
                 <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                <div>Belum ada data penjualan. Tambahkan data penjualan terlebih dahulu.</div>
+                <div>Belum ada data penjualan atau kategori terdaftar. Tambahkan produk dengan kategori dan data penjualan terlebih dahulu.</div>
             </div>
         <?php endif; ?>
 
         <!-- Form Pilih Parameter -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-semibold"><i class="bi bi-sliders me-2 text-primary"></i>Parameter Prediksi</h6>
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-sliders me-2 text-primary"></i>Parameter Prediksi Kategori</h6>
             </div>
             <div class="card-body">
                 <form id="predictionForm">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold">Jenis Daster <span class="text-danger">*</span></label>
-                            <select class="form-select" id="variantSelect" <?php echo empty($varianList) ? 'disabled' : ''; ?>>
-                                <?php if (empty($varianList)): ?>
-                                    <option value="">Belum ada data varian</option>
+                            <label class="form-label fw-semibold">Kategori Daster <span class="text-danger">*</span></label>
+                            <select class="form-select" id="kategoriSelect" <?php echo empty($kategoriList) ? 'disabled' : ''; ?>>
+                                <?php if (empty($kategoriList)): ?>
+                                    <option value="">Belum ada data kategori</option>
                                 <?php else: ?>
-                                    <?php foreach ($varianList as $v): ?>
-                                        <option value="<?php echo htmlspecialchars($v); ?>"><?php echo htmlspecialchars($v); ?></option>
+                                    <?php foreach ($kategoriList as $k): ?>
+                                        <option value="<?php echo htmlspecialchars($k); ?>"><?php echo htmlspecialchars($k); ?></option>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </select>
@@ -89,20 +90,20 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                             <input type="number" class="form-control" id="jumlahDiramal" value="1" min="1" max="24" required>
                         </div>
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary px-4">
-                                <i class="bi bi-calculator me-1"></i> Hitung Prediksi
+                            <button type="submit" class="btn btn-primary px-4" <?php echo empty($kategoriList) ? 'disabled' : ''; ?>>
+                                <i class="bi bi-calculator me-1"></i> Hitung Prediksi Kategori
                             </button>
                         </div>
                     </div>
                 </form>
 
-                <?php if (!empty($dataByVarian)): ?>
+                <?php if (!empty($dataByKategori)): ?>
                 <div class="mt-3 pt-3 border-top">
-                    <p class="text-muted small mb-2"><i class="bi bi-info-circle me-1"></i>Data tersedia per varian:</p>
+                    <p class="text-muted small mb-2"><i class="bi bi-info-circle me-1"></i>Data tersedia per Kategori:</p>
                     <div class="d-flex flex-wrap gap-2">
-                        <?php foreach ($dataByVarian as $v => $rows): ?>
+                        <?php foreach ($dataByKategori as $k => $rows): ?>
                             <span class="badge bg-light text-dark border">
-                                <?php echo htmlspecialchars($v); ?>:
+                                <?php echo htmlspecialchars($k); ?>:
                                 <strong><?php echo count($rows); ?> bulan</strong>
                                 (<?php echo $rows[0]['label']; ?> s/d <?php echo $rows[count($rows)-1]['label']; ?>)
                             </span>
@@ -121,7 +122,7 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 fw-semibold">
                         <i class="bi bi-table me-2 text-primary"></i>
-                        Tabel Perhitungan SMA – <span id="lblVarian"></span>
+                        Tabel Perhitungan SMA Kategori – <span id="lblKategori"></span>
                     </h6>
                     <span class="badge bg-primary bg-opacity-10 text-primary" id="lblPeriode"></span>
                 </div>
@@ -131,12 +132,12 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                             <thead class="table-light">
                                 <tr>
                                     <th class="ps-3 text-center" style="width:50px">NO</th>
-                                    <th>TANGGAL</th>
-                                    <th class="text-center">Xt</th>
-                                    <th class="text-center">Ft</th>
-                                    <th class="text-center">Xt-Ft</th>
-                                    <th class="text-center">MAPE</th>
-                                    <th class="text-center">sMAPE</th>
+                                    <th>BULAN</th>
+                                    <th class="text-center">Xt (AKTUAL)</th>
+                                    <th class="text-center">Ft (PREDIKSI)</th>
+                                    <th class="text-center">Xt-Ft (ERROR)</th>
+                                    <th class="text-center">MAPE (%)</th>
+                                    <th class="text-center">sMAPE (%)</th>
                                 </tr>
                             </thead>
                             <tbody id="smaTableBody"></tbody>
@@ -145,17 +146,17 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                 </div>
             </div>
 
-            <!-- Hasil Prediksi -->
+            <!-- Hasil Prediksi Proyeksi -->
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white py-3">
-                    <h6 class="mb-0 fw-semibold"><i class="bi bi-bullseye me-2 text-success"></i>Hasil Prediksi Penjualan Daster Selanjutnya</h6>
+                    <h6 class="mb-0 fw-semibold"><i class="bi bi-bullseye me-2 text-success"></i>Hasil Proyeksi Prediksi Kategori Selanjutnya</h6>
                 </div>
                 <div class="card-body p-0">
                     <table class="table mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4">TANGGAL</th>
-                                <th class="text-center">PENJUALAN</th>
+                                <th class="ps-4">BULAN PERIODE</th>
+                                <th class="text-center">HASIL PREDIKSI (PCS)</th>
                             </tr>
                         </thead>
                         <tbody id="hasilPrediksiBody"></tbody>
@@ -168,7 +169,7 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 fw-semibold">
                         <i class="bi bi-graph-up-arrow me-2 text-primary"></i>
-                        Grafik Aktual vs Prediksi SMA – <span id="chartLblVarian"></span>
+                        Grafik Penjualan Aktual vs Prediksi – Kategori <span id="chartLblKategori"></span>
                     </h6>
                     <span class="badge bg-success bg-opacity-10 text-success" id="chartLblPeriode"></span>
                 </div>
@@ -184,8 +185,8 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 </main>
 
 <script>
-    // Data dari PHP: { 'NamaProduk': [{ bulan:'YYYY-MM', label:'Januari 2025', total:120 }, ...] }
-    const DBData = <?php echo json_encode($dataByVarian); ?>;
+    // Data dari PHP: { 'NamaKategori': [{ bulan:'YYYY-MM', label:'Januari 2025', total:120 }, ...] }
+    const DBData = <?php echo json_encode($dataByKategori); ?>;
 
     // Daftar nama bulan Indonesia untuk labeling prediksi ke depan
     const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni',
@@ -215,15 +216,15 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
     document.getElementById('predictionForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
-        const variant      = document.getElementById('variantSelect').value;
+        const kategori     = document.getElementById('kategoriSelect').value;
         const bulanAwal    = document.getElementById('bulanAwal').value;   // YYYY-MM
         const bulanAkhir   = document.getElementById('bulanAkhir').value;  // YYYY-MM
         const n            = parseInt(document.getElementById('periodeN').value);
         const jumlahDiramal = parseInt(document.getElementById('jumlahDiramal').value);
 
         // ── Validasi ──────────────────────────────────────────
-        if (!variant || !DBData[variant]) {
-            alert('Pilih varian produk terlebih dahulu.'); return;
+        if (!kategori || !DBData[kategori]) {
+            alert('Pilih kategori daster terlebih dahulu.'); return;
         }
         if (!bulanAwal || !bulanAkhir) {
             alert('Bulan Awal dan Akhir harus diisi.'); return;
@@ -233,7 +234,7 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
         }
 
         // ── Filter data sesuai rentang bulan ────────────────
-        const allRows = DBData[variant];
+        const allRows = DBData[kategori];
         const rows = allRows.filter(r => r.bulan >= bulanAwal && r.bulan <= bulanAkhir);
 
         if (rows.length < n) {
@@ -256,15 +257,26 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 
             if (i >= n) {
                 const slice = rows.slice(i - n, i).map(r => r.total);
-                Ft       = parseFloat((slice.reduce((a, b) => a + b, 0) / n).toFixed(2));
-                XtFt     = parseFloat((Xt - Ft).toFixed(2));
-                const absErr = Math.abs(XtFt);
-                mapeRow  = Xt !== 0 ? parseFloat((absErr / Xt * 100).toFixed(2)) : 0;
-                const denom = (Xt + Ft) / 2;
-                smapeRow = denom !== 0 ? parseFloat((absErr / denom * 100).toFixed(2)) : 0;
+                // Keep Ft in full double-precision!
+                const FtFull = slice.reduce((a, b) => a + b, 0) / n;
+                Ft = FtFull;
+                
+                // Keep error in full precision
+                const XtFtFull = Xt - FtFull;
+                XtFt = XtFtFull;
+                
+                const absErr = Math.abs(XtFtFull);
+                
+                // Keep MAPE and sMAPE in full precision
+                const mapeRowFull = Xt !== 0 ? (absErr / Xt * 100) : 0;
+                mapeRow = mapeRowFull;
+                
+                const denom = (Xt + FtFull) / 2;
+                const smapeRowFull = denom !== 0 ? (absErr / denom * 100) : 0;
+                smapeRow = smapeRowFull;
 
-                sumMAPE  += mapeRow;
-                sumSMAPE += smapeRow;
+                sumMAPE  += mapeRowFull;
+                sumSMAPE += smapeRowFull;
                 validCount++;
             }
             tableRows.push({ label, Xt, Ft, XtFt, mapeRow, smapeRow, isDiramal: false });
@@ -280,23 +292,23 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 
         for (let p = 0; p < jumlahDiramal; p++) {
             const slice = buffer.slice(-n);
-            const Ft = parseFloat((slice.reduce((a, b) => a + b, 0) / n).toFixed(2));
-            buffer.push(Ft);
+            const FtFull = slice.reduce((a, b) => a + b, 0) / n;
+            buffer.push(FtFull);
 
             lastBulan = tambahBulan(lastBulan, 1);
             const labelBulan = labelDariBulan(lastBulan);
 
-            hasilPrediksi.push({ label: labelBulan, Ft });
-            tableRows.push({ label: labelBulan, Xt: null, Ft, XtFt: null, mapeRow: null, smapeRow: null, isDiramal: true });
+            hasilPrediksi.push({ label: labelBulan, Ft: FtFull });
+            tableRows.push({ label: labelBulan, Xt: null, Ft: FtFull, XtFt: null, mapeRow: null, smapeRow: null, isDiramal: true });
 
             chartLabels.push(labelBulan);
             chartAktual.push(null);
-            chartPrediksi.push(Ft);
+            chartPrediksi.push(FtFull);
         }
 
         // ── Rata-rata MAPE & sMAPE ────────────────────────────
-        const MAPE  = validCount ? parseFloat((sumMAPE  / validCount).toFixed(2)) : 0;
-        const SMAPE = validCount ? parseFloat((sumSMAPE / validCount).toFixed(2)) : 0;
+        const MAPE  = validCount ? (sumMAPE  / validCount) : 0;
+        const SMAPE = validCount ? (sumSMAPE / validCount) : 0;
 
         // ── Render Tabel ──────────────────────────────────────
         const tbody = document.getElementById('smaTableBody');
@@ -306,15 +318,23 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
             const row = document.createElement('tr');
             if (r.isDiramal) row.className = 'table-success';
             const dash = '<span class="text-muted">–</span>';
+            
+            // Format numbers to match Excel's display (exactly 2 decimal places, or dash if null)
+            const displayXt = r.Xt !== null ? r.Xt : dash;
+            const displayFt = r.Ft !== null ? r.Ft.toFixed(2) : dash;
+            const displayXtFt = r.XtFt !== null ? r.XtFt.toFixed(2) : dash;
+            const displayMape = r.mapeRow !== null ? r.mapeRow.toFixed(2) : dash;
+            const displaySmape = r.smapeRow !== null ? r.smapeRow.toFixed(2) : dash;
+
             row.innerHTML = `
                 <td class="text-center small text-muted">${no++}</td>
                 <td class="small ${r.isDiramal ? 'fw-semibold text-success' : ''}"
                 >${r.label}${r.isDiramal ? ' <span class="badge bg-success ms-1">Diramal</span>' : ''}</td>
-                <td class="text-center">${r.Xt !== null ? r.Xt : dash}</td>
-                <td class="text-center ${r.isDiramal ? 'fw-bold text-success' : ''}">${r.Ft !== null ? r.Ft.toFixed(2) : dash}</td>
-                <td class="text-center ${r.XtFt !== null && r.XtFt < 0 ? 'text-danger' : ''}">${r.XtFt !== null ? r.XtFt.toFixed(2) : dash}</td>
-                <td class="text-center">${r.mapeRow !== null ? r.mapeRow.toFixed(2) : dash}</td>
-                <td class="text-center">${r.smapeRow !== null ? r.smapeRow.toFixed(2) : dash}</td>
+                <td class="text-center">${displayXt}</td>
+                <td class="text-center ${r.isDiramal ? 'fw-bold text-success' : ''}">${displayFt}</td>
+                <td class="text-center ${r.XtFt !== null && r.XtFt < 0 ? 'text-danger' : ''}">${displayXtFt}</td>
+                <td class="text-center">${displayMape}</td>
+                <td class="text-center">${displaySmape}</td>
             `;
             tbody.appendChild(row);
         });
@@ -322,19 +342,19 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
         // Baris MAPE & sMAPE di footer tabel
         tbody.innerHTML += `
             <tr class="table-warning fw-semibold">
-                <td class="text-center" colspan="5">MAPE</td>
-                <td class="text-center" colspan="2">${MAPE.toFixed(2)}</td>
+                <td class="text-center" colspan="5">MAPE (Mean Absolute Percentage Error)</td>
+                <td class="text-center" colspan="2">${MAPE.toFixed(2)} %</td>
             </tr>
             <tr class="table-info fw-semibold">
-                <td class="text-center" colspan="5">sMAPE</td>
-                <td class="text-center" colspan="2">${SMAPE.toFixed(2)}</td>
+                <td class="text-center" colspan="5">sMAPE (Symmetric Mean Absolute Percentage Error)</td>
+                <td class="text-center" colspan="2">${SMAPE.toFixed(2)} %</td>
             </tr>
         `;
 
         // ── Label header ─────────────────────────────────────
-        document.getElementById('lblVarian').textContent       = variant;
+        document.getElementById('lblKategori').textContent       = kategori;
         document.getElementById('lblPeriode').textContent      = `n = ${n} | ${labelDariBulan(bulanAwal)} – ${labelDariBulan(bulanAkhir)}`;
-        document.getElementById('chartLblVarian').textContent  = variant;
+        document.getElementById('chartLblKategori').textContent  = kategori;
         document.getElementById('chartLblPeriode').textContent = `SMA-${n}`;
 
         // ── Tabel Hasil Prediksi ──────────────────────────────
@@ -344,11 +364,11 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
             hasilBody.innerHTML += `
                 <tr>
                     <td class="ps-4 fw-semibold text-success">${hp.label}</td>
-                    <td class="text-center fw-bold text-success">${Math.round(hp.Ft)}</td>
+                    <td class="text-center fw-bold text-success">${Math.round(hp.Ft)} pcs</td>
                 </tr>
             `;
         });
-        // Baris "dst" jika ada lebih dari 1 prediksi (atau selalu tampilkan sebagai penanda)
+        // Baris "dst" jika ada lebih dari 1 prediksi
         hasilBody.innerHTML += `
             <tr class="text-muted small">
                 <td class="ps-4 fst-italic">dst</td>
@@ -373,7 +393,7 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                 labels: chartLabels,
                 datasets: [
                     {
-                        label: 'Aktual (Y)',
+                        label: 'Aktual (Yt)',
                         data: chartAktual,
                         borderColor: '#6366f1',
                         backgroundColor: 'rgba(99,102,241,0.08)',
@@ -384,7 +404,7 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                         spanGaps: false
                     },
                     {
-                        label: `Prediksi SMA-${n} (Ft)`,
+                        label: `Prediksi Kategori SMA-${n} (Ft)`,
                         data: chartPrediksi,
                         borderColor: '#f59e0b',
                         backgroundColor: 'rgba(245,158,11,0.05)',

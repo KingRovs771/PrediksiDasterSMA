@@ -13,7 +13,10 @@ class Produk
 
     public function getAllProduk()
     {
-        $this->db->query("SELECT * FROM data_produk ORDER BY id DESC");
+        $this->db->query("SELECT dp.*, k.nama_kategori as kategori 
+                          FROM data_produk dp 
+                          LEFT JOIN kategori k ON dp.kategori_id = k.id 
+                          ORDER BY dp.id DESC");
         return $this->db->resultSet();
     }
 
@@ -66,10 +69,10 @@ class Produk
 
     public function tambahProduk($data)
     {
-        $this->db->query("INSERT INTO data_produk (kode_produk, nama_produk, kategori, harga, stok) VALUES (:kode, :nama, :kategori, :harga, :stok)");
+        $this->db->query("INSERT INTO data_produk (kode_produk, nama_produk, kategori_id, harga, stok) VALUES (:kode, :nama, :kategori_id, :harga, :stok)");
         $this->db->bind(':kode', $data['kode_produk']);
         $this->db->bind(':nama', $data['nama_produk']);
-        $this->db->bind(':kategori', $data['kategori']);
+        $this->db->bind(':kategori_id', $data['kategori_id']);
         $this->db->bind(':harga', $data['harga']);
         $this->db->bind(':stok', $data['stok']);
         return $this->db->execute();
@@ -77,11 +80,11 @@ class Produk
 
     public function updateProduk($data)
     {
-        $this->db->query("UPDATE data_produk SET kode_produk = :kode, nama_produk = :nama, kategori = :kategori, harga = :harga, stok = :stok WHERE id = :id");
+        $this->db->query("UPDATE data_produk SET kode_produk = :kode, nama_produk = :nama, kategori_id = :kategori_id, harga = :harga, stok = :stok WHERE id = :id");
         $this->db->bind(':id', $data['id']);
         $this->db->bind(':kode', $data['kode_produk']);
         $this->db->bind(':nama', $data['nama_produk']);
-        $this->db->bind(':kategori', $data['kategori']);
+        $this->db->bind(':kategori_id', $data['kategori_id']);
         $this->db->bind(':harga', $data['harga']);
         $this->db->bind(':stok', $data['stok']);
         return $this->db->execute();

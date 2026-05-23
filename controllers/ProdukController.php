@@ -38,9 +38,10 @@ class ProdukController
 
     private function add($data)
     {
-        // Tetapkan kategori default jika kosong agar seragam
-        if (empty($data['kategori'])) {
-            $data['kategori'] = 'Daster';
+        if (empty($data['kategori_id'])) {
+            $data['kategori_id'] = 1;
+        } else {
+            $data['kategori_id'] = (int)$data['kategori_id'];
         }
 
         if ($this->model->tambahProduk($data)) {
@@ -56,8 +57,10 @@ class ProdukController
 
     private function update($data)
     {
-        if (empty($data['kategori'])) {
-            $data['kategori'] = 'Daster';
+        if (empty($data['kategori_id'])) {
+            $data['kategori_id'] = 1;
+        } else {
+            $data['kategori_id'] = (int)$data['kategori_id'];
         }
 
         if ($this->model->updateProduk($data)) {
