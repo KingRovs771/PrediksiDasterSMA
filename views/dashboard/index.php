@@ -65,6 +65,16 @@ require_once __DIR__ . '/../../core/auth_guard.php';
                 margin-left: 0;
             }
         }
+
+        .card-hover {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12) !important;
+        }
     </style>
 </head>
 
@@ -93,8 +103,6 @@ require_once __DIR__ . '/../../core/auth_guard.php';
                     class="bi bi-graph-up me-2"></i>Grafik Penjualan</a>
             <a href="index.php?page=prediksi" class="nav-link <?php echo ($page === 'prediksi') ? 'active' : ''; ?>"><i
                     class="bi bi-calculator me-2"></i>Hitung Prediksi</a>
-            <a href="index.php?page=riwayat_prediksi" class="nav-link <?php echo ($page === 'riwayat_prediksi') ? 'active' : ''; ?>"><i
-                    class="bi bi-clock-history me-2"></i>Riwayat Prediksi</a>
         </nav>
     </aside>
 
@@ -142,61 +150,69 @@ require_once __DIR__ . '/../../core/auth_guard.php';
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-6 col-xl-3">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="bg-primary bg-opacity-10 p-2 rounded-2 text-primary">
-                                        <i class="bi bi-bag-fill fs-4"></i>
+                        <a href="index.php?page=penjualan" class="text-decoration-none text-dark d-block h-100">
+                            <div class="card border-0 shadow-sm h-100 card-hover">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="bg-primary bg-opacity-10 p-2 rounded-2 text-primary">
+                                            <i class="bi bi-bag-fill fs-4"></i>
+                                        </div>
                                     </div>
+                                    <h4 class="fw-bold mb-1"><?php echo number_format($totalSales, 0, ',', '.'); ?> pcs</h4>
+                                    <p class="text-muted mb-0 small">Total Penjualan Daster</p>
                                 </div>
-                                <h4 class="fw-bold mb-1"><?php echo number_format($totalSales, 0, ',', '.'); ?> pcs</h4>
-                                <p class="text-muted mb-0 small">Total Penjualan Daster</p>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <div class="col-md-6 col-xl-3">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="bg-success bg-opacity-10 p-2 rounded-2 text-success">
-                                        <i class="bi bi-cash-stack fs-4"></i>
+                        <a href="index.php?page=grafik" class="text-decoration-none text-dark d-block h-100">
+                            <div class="card border-0 shadow-sm h-100 card-hover">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="bg-success bg-opacity-10 p-2 rounded-2 text-success">
+                                            <i class="bi bi-cash-stack fs-4"></i>
+                                        </div>
                                     </div>
+                                    <h4 class="fw-bold mb-1">Rp
+                                        <?php echo number_format($pendapatanEstimasi / 1000000, 1, ',', '.'); ?> Jt
+                                    </h4>
+                                    <p class="text-muted mb-0 small">Estimasi Pendapatan</p>
                                 </div>
-                                <h4 class="fw-bold mb-1">Rp
-                                    <?php echo number_format($pendapatanEstimasi / 1000000, 1, ',', '.'); ?> Jt
-                                </h4>
-                                <p class="text-muted mb-0 small">Estimasi Pendapatan</p>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <div class="col-md-6 col-xl-3">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="bg-warning bg-opacity-10 p-2 rounded-2 text-warning">
-                                        <i class="bi bi-box-seam-fill fs-4"></i>
+                        <a href="index.php?page=produk" class="text-decoration-none text-dark d-block h-100">
+                            <div class="card border-0 shadow-sm h-100 card-hover">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="bg-warning bg-opacity-10 p-2 rounded-2 text-warning">
+                                            <i class="bi bi-box-seam-fill fs-4"></i>
+                                        </div>
                                     </div>
+                                    <h4 class="fw-bold mb-1"><?php echo $totalVarian; ?></h4>
+                                    <p class="text-muted mb-0 small">Varian Produk Dinilai</p>
                                 </div>
-                                <h4 class="fw-bold mb-1"><?php echo $totalVarian; ?></h4>
-                                <p class="text-muted mb-0 small">Varian Produk Dinilai</p>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <div class="col-md-6 col-xl-3">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="bg-info bg-opacity-10 p-2 rounded-2 text-info">
-                                        <i class="bi bi-graph-up-arrow fs-4"></i>
+                        <a href="index.php?page=riwayat_prediksi" class="text-decoration-none text-dark d-block h-100">
+                            <div class="card border-0 shadow-sm h-100 card-hover">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="bg-info bg-opacity-10 p-2 rounded-2 text-info">
+                                            <i class="bi bi-graph-up-arrow fs-4"></i>
+                                        </div>
                                     </div>
+                                    <h4 class="fw-bold mb-1">SMA</h4>
+                                    <p class="text-muted mb-0 small">Metode Analisis Cerdas</p>
                                 </div>
-                                <h4 class="fw-bold mb-1">SMA</h4>
-                                <p class="text-muted mb-0 small">Metode Analisis Cerdas</p>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
 

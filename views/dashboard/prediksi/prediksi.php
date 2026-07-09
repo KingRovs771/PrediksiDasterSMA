@@ -463,13 +463,15 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
             smape: SMAPE,
             predictions: hasilPrediksi.map(hp => ({ ym: hp.ym, Ft: hp.Ft }))
         };
+
+        // Simpan otomatis ke riwayat
+        savePredictionToHistory(currentPredictionData, btnSave, true);
     });
 
-    // Event handler untuk tombol Simpan ke Riwayat
-    document.getElementById('btnSaveHistory').addEventListener('click', function () {
-        if (!currentPredictionData) return;
+    // Fungsi pembantu untuk menyimpan data ke database
+    function savePredictionToHistory(predictionData, btn, isAutomatic = false) {
+        if (!predictionData) return;
 
-        const btn = this;
         btn.disabled = true;
         btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...`;
 
@@ -478,25 +480,44 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(currentPredictionData)
+            body: JSON.stringify(predictionData)
         })
-        .then(response => response.json())
+        .then(response => {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                return response.json();
+            } else {
+                return response.text().then(text => {
+                    throw new Error("Respon server bukan JSON: " + text.substring(0, 150));
+                });
+            }
+        })
         .then(data => {
             if (data.status === 'success') {
-                alert(data.message);
-                btn.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> Tersimpan`;
+                if (!isAutomatic) {
+                    alert(data.message);
+                }
+                btn.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> ${isAutomatic ? 'Tersimpan Otomatis' : 'Tersimpan'}`;
                 btn.className = 'btn btn-secondary btn-sm';
                 btn.disabled = true;
             } else {
                 alert(data.message);
                 btn.disabled = false;
-                btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill me-1"></i> Simpan ke Riwayat`;
+                btn.className = 'btn btn-danger btn-sm';
+                btn.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> Simpan Gagal`;
             }
         })
         .catch(error => {
-            alert('Terjadi kesalahan koneksi saat menyimpan riwayat.');
+            console.error("Save error:", error);
+            alert('Gagal menyimpan riwayat: ' + error.message);
             btn.disabled = false;
+            btn.className = 'btn btn-danger btn-sm';
             btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill me-1"></i> Simpan ke Riwayat`;
         });
+    }
+
+    // Event handler untuk tombol Simpan ke Riwayat (jika ingin menyimpan ulang secara manual saat gagal)
+    document.getElementById('btnSaveHistory').addEventListener('click', function () {
+        savePredictionToHistory(currentPredictionData, this, false);
     });
 </script>
