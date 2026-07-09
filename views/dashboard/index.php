@@ -93,6 +93,8 @@ require_once __DIR__ . '/../../core/auth_guard.php';
                     class="bi bi-graph-up me-2"></i>Grafik Penjualan</a>
             <a href="index.php?page=prediksi" class="nav-link <?php echo ($page === 'prediksi') ? 'active' : ''; ?>"><i
                     class="bi bi-calculator me-2"></i>Hitung Prediksi</a>
+            <a href="index.php?page=riwayat_prediksi" class="nav-link <?php echo ($page === 'riwayat_prediksi') ? 'active' : ''; ?>"><i
+                    class="bi bi-clock-history me-2"></i>Riwayat Prediksi</a>
         </nav>
     </aside>
 
@@ -106,6 +108,8 @@ require_once __DIR__ . '/../../core/auth_guard.php';
         <?php require_once __DIR__ . '/laporan/laporan.php'; ?>
     <?php elseif ($page === 'prediksi'): ?>
         <?php require_once __DIR__ . '/prediksi/prediksi.php'; ?>
+    <?php elseif ($page === 'riwayat_prediksi'): ?>
+        <?php require_once __DIR__ . '/prediksi/riwayat.php'; ?>
     <?php else: ?>
         <main class="main-content">
             <nav class="navbar navbar-light bg-white border-bottom px-4 sticky-top shadow-sm">

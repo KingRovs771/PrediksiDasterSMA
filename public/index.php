@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Cek apakah user sudah login
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: /views/auth/login.php");
+    header("Location: ../views/auth/login.php");
     exit;
 }
 

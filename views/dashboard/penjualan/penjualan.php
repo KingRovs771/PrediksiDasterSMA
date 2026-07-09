@@ -28,11 +28,15 @@ $dataproduk = $model2->getAllProduk();
         <?php endif; ?>
 
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="mb-0 fw-semibold">Jadwal Penjualan Daster</h6>
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
-                    <i class="bi bi-plus-lg"></i> Tambah Data
-                </button>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="month" id="filterBulan" class="form-control form-control-sm" style="width: 160px;">
+                    <button id="btnClearFilter" class="btn btn-outline-secondary btn-sm" title="Clear Filter"><i class="bi bi-x-lg"></i></button>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+                        <i class="bi bi-plus-lg"></i> Tambah Data
+                    </button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -54,8 +58,10 @@ $dataproduk = $model2->getAllProduk();
                                 </tr>
                             <?php else: ?>
                                 <?php $no = 1;
-                                foreach ($dataPenjualan as $row): ?>
-                                    <tr>
+                                foreach ($dataPenjualan as $row): 
+                                    $ym = substr($row['tanggal'], 0, 7);
+                                ?>
+                                    <tr class="penjualan-row" data-month="<?php echo $ym; ?>">
                                         <td class="ps-4"><?php echo $no++; ?></td>
                                         <td><?php echo htmlspecialchars($row['bulan']); ?></td>
                                         <td><?php echo htmlspecialchars($row['tahun']); ?></td>
@@ -253,5 +259,50 @@ $dataproduk = $model2->getAllProduk();
         document.getElementById('add_stok_info').innerHTML = '';
         document.getElementById('add_produk_id').value = '';
         document.getElementById('terjual_add').value = '';
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterBulan = document.getElementById('filterBulan');
+        const btnClearFilter = document.getElementById('btnClearFilter');
+        const rows = document.querySelectorAll('.penjualan-row');
+        const tableBody = document.getElementById('salesTableBody');
+
+        function applyFilter() {
+            const selectedMonth = filterBulan.value; // format: YYYY-MM
+            let visibleCount = 0;
+
+            const noMatchRow = document.getElementById('noMatchSalesRow');
+            if (noMatchRow) {
+                noMatchRow.remove();
+            }
+
+            rows.forEach(row => {
+                const rowMonth = row.getAttribute('data-month');
+                if (selectedMonth === '' || rowMonth === selectedMonth) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (visibleCount === 0 && rows.length > 0) {
+                const emptyTr = document.createElement('tr');
+                emptyTr.id = 'noMatchSalesRow';
+                emptyTr.innerHTML = `
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        Tidak ada data penjualan untuk periode bulan ${selectedMonth}.
+                    </td>
+                `;
+                tableBody.appendChild(emptyTr);
+            }
+        }
+
+        filterBulan.addEventListener('change', applyFilter);
+
+        btnClearFilter.addEventListener('click', function () {
+            filterBulan.value = '';
+            applyFilter();
+        });
     });
 </script>

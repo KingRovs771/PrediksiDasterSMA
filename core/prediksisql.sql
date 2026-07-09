@@ -53,10 +53,14 @@ CREATE TABLE data_penjualan (
 -- Tabel Log Prediksi
 CREATE TABLE prediksi_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    kategori VARCHAR(100) NOT NULL,
+    bulan_awal VARCHAR(7) NOT NULL,
+    bulan_akhir VARCHAR(7) NOT NULL,
     periode_n INT NOT NULL,
     prediksi_bulan VARCHAR(7) NOT NULL,
     nilai_prediksi DECIMAL(10,2) NOT NULL,
     mape DECIMAL(5,2) NOT NULL,
+    smape DECIMAL(5,2) NOT NULL,
     user_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE

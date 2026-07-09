@@ -677,7 +677,7 @@
                                 Ingat saya
                             </label>
                         </div>
-                        <a href="#" class="forgot-link">Lupa password?</a>
+                        <a href="forgot_password.php" class="forgot-link">Lupa password?</a>
                     </div>
 
                     <button type="submit" class="btn-login" id="btnLogin">

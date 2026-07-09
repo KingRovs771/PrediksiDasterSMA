@@ -1,8 +1,8 @@
 <?php
 return [
-    'host' => 'db',
-    'user' => 'prediksi_daster_user',
-    'password' => 'userpassword',
-    'dbname' => 'prediksi_daster_collection',
+    'host' => 'localhost',
+    'user' => 'tivayoco_daster',
+    'password' => 'yogaP123@',
+    'dbname' => 'tivayoco_collection',
     'charset' => 'utf8mb4'
 ];

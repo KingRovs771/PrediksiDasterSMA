@@ -28,12 +28,19 @@ $categories = $katModel->getAllKategori();
         <?php endif; ?>
 
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="mb-0 fw-semibold">Katalog Produk</h6>
-                <!-- Temporary inactive state since there's no handler yet -->
-                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProdukModal">
-                    <i class="bi bi-plus-lg"></i> Tambah Produk
-                </button>
+                <div class="d-flex gap-2">
+                    <select id="filterKategori" class="form-select form-select-sm" style="width: 180px;">
+                        <option value="">Semua Kategori</option>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo htmlspecialchars($cat['nama_kategori']); ?>"><?php echo htmlspecialchars($cat['nama_kategori']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProdukModal">
+                        <i class="bi bi-plus-lg"></i> Tambah Produk
+                    </button>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -58,7 +65,7 @@ $categories = $katModel->getAllKategori();
                             <?php else: ?>
                                 <?php $no = 1;
                                 foreach ($dataProduk as $row): ?>
-                                    <tr>
+                                    <tr class="produk-row" data-kategori="<?php echo htmlspecialchars($row['kategori']); ?>">
                                         <td class="ps-4"><?php echo $no++; ?></td>
                                         <td><span
                                                 class="badge bg-secondary"><?php echo htmlspecialchars($row['kode_produk']); ?></span>
@@ -202,4 +209,41 @@ $categories = $katModel->getAllKategori();
         document.getElementById('edit_harga').value = data.harga;
         document.getElementById('edit_stok').value = data.stok;
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const filterKategori = document.getElementById('filterKategori');
+        const rows = document.querySelectorAll('.produk-row');
+        const tableBody = document.querySelector('table tbody');
+
+        filterKategori.addEventListener('change', function () {
+            const selectedKat = this.value;
+            let visibleCount = 0;
+
+            const noMatchRow = document.getElementById('noMatchProdukRow');
+            if (noMatchRow) {
+                noMatchRow.remove();
+            }
+
+            rows.forEach(row => {
+                const rowKat = row.getAttribute('data-kategori');
+                if (selectedKat === '' || rowKat === selectedKat) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (visibleCount === 0 && rows.length > 0) {
+                const emptyTr = document.createElement('tr');
+                emptyTr.id = 'noMatchProdukRow';
+                emptyTr.innerHTML = `
+                    <td colspan="7" class="text-center py-4 text-muted">
+                        Tidak ada data produk untuk kategori "${selectedKat}".
+                    </td>
+                `;
+                tableBody.appendChild(emptyTr);
+            }
+        });
+    });
 </script>

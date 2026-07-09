@@ -148,8 +148,11 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 
             <!-- Hasil Prediksi Proyeksi -->
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 fw-semibold"><i class="bi bi-bullseye me-2 text-success"></i>Hasil Proyeksi Prediksi Kategori Selanjutnya</h6>
+                    <button type="button" class="btn btn-success btn-sm" id="btnSaveHistory">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Simpan ke Riwayat
+                    </button>
                 </div>
                 <div class="card-body p-0">
                     <table class="table mb-0 align-middle">
@@ -185,6 +188,9 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 </main>
 
 <script>
+    // Menyimpan data peramalan aktif untuk fitur simpan riwayat
+    let currentPredictionData = null;
+
     // Data dari PHP: { 'NamaKategori': [{ bulan:'YYYY-MM', label:'Januari 2025', total:120 }, ...] }
     const DBData = <?php echo json_encode($dataByKategori); ?>;
 
@@ -298,7 +304,7 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
             lastBulan = tambahBulan(lastBulan, 1);
             const labelBulan = labelDariBulan(lastBulan);
 
-            hasilPrediksi.push({ label: labelBulan, Ft: FtFull });
+            hasilPrediksi.push({ label: labelBulan, Ft: FtFull, ym: lastBulan });
             tableRows.push({ label: labelBulan, Xt: null, Ft: FtFull, XtFt: null, mapeRow: null, smapeRow: null, isDiramal: true });
 
             chartLabels.push(labelBulan);
@@ -440,5 +446,57 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
         // Tampilkan & scroll
         document.getElementById('resultWrapper').classList.remove('d-none');
         document.getElementById('resultWrapper').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Reset tombol simpan riwayat ke keadaan aktif
+        const btnSave = document.getElementById('btnSaveHistory');
+        btnSave.disabled = false;
+        btnSave.className = 'btn btn-success btn-sm';
+        btnSave.innerHTML = `<i class="bi bi-cloud-arrow-up-fill me-1"></i> Simpan ke Riwayat`;
+
+        // Simpan data perhitungan saat ini ke variabel global
+        currentPredictionData = {
+            kategori: kategori,
+            bulan_awal: bulanAwal,
+            bulan_akhir: bulanAkhir,
+            periode_n: n,
+            mape: MAPE,
+            smape: SMAPE,
+            predictions: hasilPrediksi.map(hp => ({ ym: hp.ym, Ft: hp.Ft }))
+        };
+    });
+
+    // Event handler untuk tombol Simpan ke Riwayat
+    document.getElementById('btnSaveHistory').addEventListener('click', function () {
+        if (!currentPredictionData) return;
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Menyimpan...`;
+
+        fetch('process_prediksi.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(currentPredictionData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                btn.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> Tersimpan`;
+                btn.className = 'btn btn-secondary btn-sm';
+                btn.disabled = true;
+            } else {
+                alert(data.message);
+                btn.disabled = false;
+                btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill me-1"></i> Simpan ke Riwayat`;
+            }
+        })
+        .catch(error => {
+            alert('Terjadi kesalahan koneksi saat menyimpan riwayat.');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="bi bi-cloud-arrow-up-fill me-1"></i> Simpan ke Riwayat`;
+        });
     });
 </script>

@@ -1,0 +1,39 @@
+# ----------------------------------------------------------------------
+# Konfigurasi Keamanan Apache (.htaccess) - Tivayo Collection
+# ----------------------------------------------------------------------
+
+# 1. Nonaktifkan Directory Listing (Mencegah intip isi folder)
+Options -Indexes
+
+# 2. Blokir akses ke file konfigurasi sensitif (seperti database.php)
+<FilesMatch "^(database\.php)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 3. Blokir akses ke file dump database SQL di folder core
+<FilesMatch "\.(sql|SQL)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# 4. Blokir akses ke file konfigurasi Docker dan git
+<FilesMatch "(^Dockerfile|docker-compose\.yml|\.git|\.gitignore)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>

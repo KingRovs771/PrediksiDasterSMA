@@ -135,10 +135,14 @@ INSERT INTO `data_penjualan` (`id`, `produk_id`, `tanggal`, `jumlah_terjual`, `u
 
 CREATE TABLE `prediksi_log` (
   `id` int NOT NULL AUTO_INCREMENT,
+  `kategori` varchar(100) NOT NULL,
+  `bulan_awal` varchar(7) NOT NULL,
+  `bulan_akhir` varchar(7) NOT NULL,
   `periode_n` int NOT NULL,
   `prediksi_bulan` varchar(7) NOT NULL,
   `nilai_prediksi` decimal(10,2) NOT NULL,
   `mape` decimal(5,2) NOT NULL,
+  `smape` decimal(5,2) NOT NULL,
   `user_id` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
