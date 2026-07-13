@@ -1,9 +1,17 @@
 <?php
 require_once __DIR__ . '/../../../core/auth_guard.php';
 require_once __DIR__ . '/../../../models/Penjualan.php';
+require_once __DIR__ . '/../../../models/Kategori.php';
+require_once __DIR__ . '/../../../models/Produk.php';
 
 $model = new Penjualan();
-$rawData = $model->getPenjualanBulananPerKategori();
+$katModel = new Kategori();
+$prodModel = new Produk();
+
+$rawDataKategori = $model->getPenjualanBulananPerKategori();
+$rawDataVarian = $model->getPenjualanBulananPerVarian();
+$categories = $katModel->getAllKategori();
+$products = $prodModel->getAllProduk();
 
 // Konversi nama bulan Inggris → Indonesia dari DB
 $bulanMap = [
@@ -15,7 +23,7 @@ $bulanMap = [
 
 // Susun data per kategori: { 'Daster Arab' => [{ bulan:'YYYY-MM', label:'Januari 2025', total:120 }, ...] }
 $dataByKategori = [];
-foreach ($rawData as $row) {
+foreach ($rawDataKategori as $row) {
     $k = $row['kategori'];
     if (empty($k)) continue;
     if (!isset($dataByKategori[$k])) {
@@ -30,45 +38,70 @@ foreach ($rawData as $row) {
         'total'  => (int) $row['total'],
     ];
 }
-$kategoriList = array_keys($dataByKategori);
+
+// Susun data per varian: { 'Motif Bunga' => [{ bulan:'YYYY-MM', label:'Januari 2025', total:120, kategori:'Daster Arab' }, ...] }
+$dataByVarian = [];
+foreach ($rawDataVarian as $row) {
+    $v = $row['varian'];
+    if (empty($v)) continue;
+    if (!isset($dataByVarian[$v])) {
+        $dataByVarian[$v] = [];
+    }
+    $parts = explode(' ', $row['bulan_label'], 2);
+    $labelIndo = ($bulanMap[$parts[0]] ?? $parts[0]) . ' ' . ($parts[1] ?? '');
+    $dataByVarian[$v][] = [
+        'bulan'    => $row['bulan'],
+        'label'    => $labelIndo,
+        'total'    => (int) $row['total'],
+        'kategori' => $row['kategori'] ?? ''
+    ];
+}
 
 // Cari bulan min dan max dari semua data
-$allBulan = array_column($rawData, 'bulan');
+$allBulan = array_merge(array_column($rawDataKategori, 'bulan'), array_column($rawDataVarian, 'bulan'));
 $bulanMin = !empty($allBulan) ? min($allBulan) : date('Y-m', strtotime('-1 year'));
 $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 ?>
 <main class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom px-4 sticky-top shadow-sm">
-        <h5 class="mb-0 fw-bold">Hitung Prediksi Kategori – Single Moving Average (SMA)</h5>
+        <h5 class="mb-0 fw-bold">Hitung Prediksi Penjualan – Single Moving Average (SMA)</h5>
     </nav>
 
     <div class="container-fluid p-4">
 
-        <?php if (empty($kategoriList)): ?>
+        <?php if (empty($categories) && empty($products)): ?>
             <div class="alert alert-warning d-flex align-items-center gap-2 shadow-sm">
                 <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                <div>Belum ada data penjualan atau kategori terdaftar. Tambahkan produk dengan kategori dan data penjualan terlebih dahulu.</div>
+                <div>Belum ada data penjualan, produk, atau kategori terdaftar. Tambahkan produk dengan kategori dan data penjualan terlebih dahulu.</div>
             </div>
         <?php endif; ?>
 
         <!-- Form Pilih Parameter -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white py-3">
-                <h6 class="mb-0 fw-semibold"><i class="bi bi-sliders me-2 text-primary"></i>Parameter Prediksi Kategori</h6>
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-sliders me-2 text-primary"></i>Parameter Prediksi Penjualan</h6>
             </div>
             <div class="card-body">
                 <form id="predictionForm">
                     <div class="row g-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Kategori Daster <span class="text-danger">*</span></label>
-                            <select class="form-select" id="kategoriSelect" <?php echo empty($kategoriList) ? 'disabled' : ''; ?>>
-                                <?php if (empty($kategoriList)): ?>
-                                    <option value="">Belum ada data kategori</option>
-                                <?php else: ?>
-                                    <?php foreach ($kategoriList as $k): ?>
-                                        <option value="<?php echo htmlspecialchars($k); ?>"><?php echo htmlspecialchars($k); ?></option>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Kategori Daster</label>
+                            <select class="form-select" id="kategoriSelect" <?php echo empty($categories) ? 'disabled' : ''; ?>>
+                                <option value="">Pilih Kategori (Opsional)</option>
+                                <?php foreach ($categories as $cat): ?>
+                                    <option value="<?php echo htmlspecialchars($cat['nama_kategori']); ?>"><?php echo htmlspecialchars($cat['nama_kategori']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Varian/Item Daster</label>
+                            <select class="form-select" id="varianSelect" <?php echo empty($products) ? 'disabled' : ''; ?>>
+                                <option value="">Pilih Varian/Item (Opsional)</option>
+                                <?php foreach ($products as $prod): ?>
+                                    <option value="<?php echo htmlspecialchars($prod['nama_produk']); ?>" data-kategori="<?php echo htmlspecialchars($prod['kategori']); ?>">
+                                        <?php echo htmlspecialchars($prod['nama_produk']); ?> (<?php echo htmlspecialchars($prod['kategori']); ?>)
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -90,8 +123,8 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                             <input type="number" class="form-control" id="jumlahDiramal" value="1" min="1" max="24" required>
                         </div>
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary px-4" <?php echo empty($kategoriList) ? 'disabled' : ''; ?>>
-                                <i class="bi bi-calculator me-1"></i> Hitung Prediksi Kategori
+                            <button type="submit" class="btn btn-primary px-4" <?php echo (empty($categories) && empty($products)) ? 'disabled' : ''; ?>>
+                                <i class="bi bi-calculator me-1"></i> Hitung Prediksi
                             </button>
                         </div>
                     </div>
@@ -191,8 +224,9 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
     // Menyimpan data peramalan aktif untuk fitur simpan riwayat
     let currentPredictionData = null;
 
-    // Data dari PHP: { 'NamaKategori': [{ bulan:'YYYY-MM', label:'Januari 2025', total:120 }, ...] }
-    const DBData = <?php echo json_encode($dataByKategori); ?>;
+    // Data dari PHP
+    const DBDataKategori = <?php echo json_encode($dataByKategori); ?>;
+    const DBDataVarian = <?php echo json_encode($dataByVarian); ?>;
 
     // Daftar nama bulan Indonesia untuk labeling prediksi ke depan
     const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni',
@@ -219,19 +253,57 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 
     let prediksiChartInstance = null;
 
+    // Filter dropdown Varian berdasarkan Kategori yang dipilih
+    document.getElementById('kategoriSelect').addEventListener('change', function() {
+        const selectedKat = this.value;
+        const varianSelect = document.getElementById('varianSelect');
+        const options = varianSelect.querySelectorAll('option');
+
+        options.forEach(opt => {
+            if (opt.value === "") {
+                opt.style.display = "";
+                return;
+            }
+            const kat = opt.getAttribute('data-kategori');
+            if (selectedKat === "" || kat === selectedKat) {
+                opt.style.display = "";
+            } else {
+                opt.style.display = "none";
+            }
+        });
+
+        // Reset pilihan varian jika tersembunyi
+        const activeOpt = varianSelect.options[varianSelect.selectedIndex];
+        if (activeOpt && activeOpt.value !== "" && activeOpt.style.display === "none") {
+            varianSelect.value = "";
+        }
+    });
+
+    // Pilihan varian otomatis menyesuaikan kategori
+    document.getElementById('varianSelect').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption && selectedOption.value !== "") {
+            const kat = selectedOption.getAttribute('data-kategori');
+            const kategoriSelect = document.getElementById('kategoriSelect');
+            if (kategoriSelect.value === "") {
+                kategoriSelect.value = kat;
+                kategoriSelect.dispatchEvent(new Event('change'));
+                this.value = selectedOption.value; // Kembalikan ke pilihan produk
+            }
+        }
+    });
+
     document.getElementById('predictionForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
         const kategori     = document.getElementById('kategoriSelect').value;
+        const varian       = document.getElementById('varianSelect').value;
         const bulanAwal    = document.getElementById('bulanAwal').value;   // YYYY-MM
         const bulanAkhir   = document.getElementById('bulanAkhir').value;  // YYYY-MM
         const n            = parseInt(document.getElementById('periodeN').value);
         const jumlahDiramal = parseInt(document.getElementById('jumlahDiramal').value);
 
         // ── Validasi ──────────────────────────────────────────
-        if (!kategori || !DBData[kategori]) {
-            alert('Pilih kategori daster terlebih dahulu.'); return;
-        }
         if (!bulanAwal || !bulanAkhir) {
             alert('Bulan Awal dan Akhir harus diisi.'); return;
         }
@@ -239,9 +311,37 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
             alert('Bulan Awal tidak boleh lebih besar dari Bulan Akhir.'); return;
         }
 
-        // ── Filter data sesuai rentang bulan ────────────────
-        const allRows = DBData[kategori];
-        const rows = allRows.filter(r => r.bulan >= bulanAwal && r.bulan <= bulanAkhir);
+        // ── Pilih rentang data dan target label peramalan ─────
+        let rows = [];
+        let predictionTargetLabel = "";
+
+        if (varian !== "") {
+            // Prediksi per Varian/Item
+            if (!DBDataVarian[varian]) {
+                alert('Data penjualan untuk varian produk tersebut tidak ditemukan.'); return;
+            }
+            const allRows = DBDataVarian[varian];
+            rows = allRows.filter(r => r.bulan >= bulanAwal && r.bulan <= bulanAkhir);
+
+            if (kategori !== "") {
+                predictionTargetLabel = `${kategori} - ${varian}`;
+            } else {
+                const sampleRow = allRows.find(r => r.kategori);
+                const itemKat = sampleRow ? sampleRow.kategori : '';
+                predictionTargetLabel = itemKat !== "" ? `${itemKat} - ${varian}` : varian;
+            }
+        } else if (kategori !== "") {
+            // Prediksi per Kategori
+            if (!DBDataKategori[kategori]) {
+                alert('Data penjualan untuk kategori tersebut tidak ditemukan.'); return;
+            }
+            const allRows = DBDataKategori[kategori];
+            rows = allRows.filter(r => r.bulan >= bulanAwal && r.bulan <= bulanAkhir);
+
+            predictionTargetLabel = kategori;
+        } else {
+            alert('Harap pilih Kategori atau Varian/Item Daster terlebih dahulu.'); return;
+        }
 
         if (rows.length < n) {
             alert(`Data dalam rentang ${labelDariBulan(bulanAwal)} – ${labelDariBulan(bulanAkhir)} hanya ada ${rows.length} bulan.\nDibutuhkan minimal ${n} bulan untuk SMA-${n}.\n\nGunakan Periode Moving yang lebih kecil atau perluas rentang bulan.`);
@@ -358,9 +458,9 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
         `;
 
         // ── Label header ─────────────────────────────────────
-        document.getElementById('lblKategori').textContent       = kategori;
+        document.getElementById('lblKategori').textContent       = predictionTargetLabel;
         document.getElementById('lblPeriode').textContent      = `n = ${n} | ${labelDariBulan(bulanAwal)} – ${labelDariBulan(bulanAkhir)}`;
-        document.getElementById('chartLblKategori').textContent  = kategori;
+        document.getElementById('chartLblKategori').textContent  = predictionTargetLabel;
         document.getElementById('chartLblPeriode').textContent = `SMA-${n}`;
 
         // ── Tabel Hasil Prediksi ──────────────────────────────
@@ -410,7 +510,7 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
                         spanGaps: false
                     },
                     {
-                        label: `Prediksi Kategori SMA-${n} (Ft)`,
+                        label: `Prediksi SMA-${n} (Ft)`,
                         data: chartPrediksi,
                         borderColor: '#f59e0b',
                         backgroundColor: 'rgba(245,158,11,0.05)',
@@ -455,7 +555,7 @@ $bulanMax = !empty($allBulan) ? max($allBulan) : date('Y-m');
 
         // Simpan data perhitungan saat ini ke variabel global
         currentPredictionData = {
-            kategori: kategori,
+            kategori: predictionTargetLabel,
             bulan_awal: bulanAwal,
             bulan_akhir: bulanAkhir,
             periode_n: n,

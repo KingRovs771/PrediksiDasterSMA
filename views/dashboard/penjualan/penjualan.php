@@ -2,10 +2,31 @@
 require_once __DIR__ . '/../../../core/auth_guard.php';
 require_once __DIR__ . '/../../../models/Penjualan.php';
 require_once __DIR__ . '/../../../models/Produk.php';
+require_once __DIR__ . '/../../../models/Kategori.php';
 $model = new Penjualan();
 $model2 = new Produk();
+$katModel = new Kategori();
 $dataPenjualan = $model->getAllPenjualan();
 $dataproduk = $model2->getAllProduk();
+$categories = $katModel->getAllKategori();
+
+// Ambil daftar bulan-tahun yang tersedia dari data penjualan untuk dropdown filter
+$availableMonths = [];
+foreach ($dataPenjualan as $sale) {
+    $ym = substr($sale['tanggal'], 0, 7); // Format: YYYY-MM
+    if (!isset($availableMonths[$ym])) {
+        $year = substr($ym, 0, 4);
+        $monthNum = substr($ym, 5, 2);
+        $monthNames = [
+            '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+            '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+            '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+        ];
+        $monthLabel = ($monthNames[$monthNum] ?? '') . ' ' . $year;
+        $availableMonths[$ym] = $monthLabel;
+    }
+}
+krsort($availableMonths); // Urutkan dari bulan terbaru
 ?>
 <main class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom px-4 sticky-top shadow-sm">
@@ -27,11 +48,49 @@ $dataproduk = $model2->getAllProduk();
             ?>
         <?php endif; ?>
 
+        <!-- Card Ringkasan Penjualan per Kategori -->
+        <div class="row g-3 mb-4">
+            <?php 
+            $colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary'];
+            foreach ($categories as $index => $cat): 
+                $namaKat = $cat['nama_kategori'];
+                $totalTerjual = 0;
+                foreach ($dataPenjualan as $sale) {
+                    if (($sale['kategori'] ?? '') === $namaKat) {
+                        $totalTerjual += (int)$sale['terjual'];
+                    }
+                }
+                $color = $colors[$index % count($colors)];
+            ?>
+                <div class="col-md-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100 card-hover" style="border-left: 4px solid var(--bs-<?php echo $color; ?>) !important;">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted small fw-semibold text-uppercase tracking-wider"><?php echo htmlspecialchars($namaKat); ?></span>
+                                <div class="bg-<?php echo $color; ?> bg-opacity-10 p-2 rounded-2 text-<?php echo $color; ?>">
+                                    <i class="bi bi-cart-fill fs-5"></i>
+                                </div>
+                            </div>
+                            <h3 class="fw-bold mb-1"><?php echo number_format($totalTerjual, 0, ',', '.'); ?> <span class="fs-6 text-muted fw-normal">Pcs</span></h3>
+                            <p class="text-muted mb-0 small">
+                                <i class="bi bi-graph-up me-1"></i> Total Penjualan
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="mb-0 fw-semibold">Jadwal Penjualan Daster</h6>
                 <div class="d-flex gap-2 align-items-center">
-                    <input type="month" id="filterBulan" class="form-control form-control-sm" style="width: 160px;">
+                    <select id="filterBulan" class="form-select form-select-sm" style="width: 180px;">
+                        <option value="">Semua Bulan</option>
+                        <?php foreach ($availableMonths as $ym => $label): ?>
+                            <option value="<?php echo $ym; ?>"><?php echo htmlspecialchars($label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                     <button id="btnClearFilter" class="btn btn-outline-secondary btn-sm" title="Clear Filter"><i class="bi bi-x-lg"></i></button>
                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal">
                         <i class="bi bi-plus-lg"></i> Tambah Data
@@ -46,6 +105,7 @@ $dataproduk = $model2->getAllProduk();
                                 <th class="ps-4">No</th>
                                 <th>Bulan</th>
                                 <th>Tahun</th>
+                                <th>Kategori</th>
                                 <th>Varian</th>
                                 <th>Terjual</th>
                                 <th class="text-center">Aksi</th>
@@ -54,7 +114,7 @@ $dataproduk = $model2->getAllProduk();
                         <tbody id="salesTableBody">
                             <?php if (empty($dataPenjualan)): ?>
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">Belum ada data penjualan.</td>
+                                    <td colspan="7" class="text-center py-4 text-muted">Belum ada data penjualan.</td>
                                 </tr>
                             <?php else: ?>
                                 <?php $no = 1;
@@ -65,6 +125,7 @@ $dataproduk = $model2->getAllProduk();
                                         <td class="ps-4"><?php echo $no++; ?></td>
                                         <td><?php echo htmlspecialchars($row['bulan']); ?></td>
                                         <td><?php echo htmlspecialchars($row['tahun']); ?></td>
+                                        <td><?php echo htmlspecialchars($row['kategori'] ?? ''); ?></td>
                                         <td><?php echo htmlspecialchars($row['varian']); ?></td>
                                         <td><span
                                                 class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-2"><?php echo htmlspecialchars($row['terjual']); ?>
@@ -290,7 +351,7 @@ $dataproduk = $model2->getAllProduk();
                 const emptyTr = document.createElement('tr');
                 emptyTr.id = 'noMatchSalesRow';
                 emptyTr.innerHTML = `
-                    <td colspan="6" class="text-center py-4 text-muted">
+                    <td colspan="7" class="text-center py-4 text-muted">
                         Tidak ada data penjualan untuk periode bulan ${selectedMonth}.
                     </td>
                 `;

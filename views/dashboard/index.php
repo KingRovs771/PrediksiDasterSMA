@@ -227,6 +227,7 @@ require_once __DIR__ . '/../../core/auth_guard.php';
                                     <tr>
                                         <th class="ps-4">No</th>
                                         <th>Bulan</th>
+                                        <th>Kategori</th>
                                         <th>Varian</th>
                                         <th>Terjual</th>
                                     </tr>
@@ -258,13 +259,14 @@ require_once __DIR__ . '/../../core/auth_guard.php';
                                             echo "<tr>
                                                     <td class=\"ps-4\">{$no}</td>
                                                     <td>{$waktu}</td>
+                                                    <td>" . htmlspecialchars($sale['kategori'] ?? '') . "</td>
                                                     <td>" . htmlspecialchars($sale['varian'] ?? '') . "</td>
                                                     <td>" . htmlspecialchars($sale['terjual'] ?? '0') . "</td>
                                                   </tr>";
                                             $no++;
                                         }
                                     } else {
-                                        echo "<tr><td colspan=\"4\" class=\"text-center text-muted py-3\">Belum ada data penjualan</td></tr>";
+                                        echo "<tr><td colspan=\"5\" class=\"text-center text-muted py-3\">Belum ada data penjualan</td></tr>";
                                     }
                                     ?>
                                 </tbody>

@@ -21,9 +21,11 @@ class Penjualan
                 dp.tanggal,
                 dp.produk_id,
                 pr.nama_produk as varian, 
+                k.nama_kategori as kategori,
                 dp.jumlah_terjual as terjual
             FROM data_penjualan dp
             JOIN data_produk pr ON dp.produk_id = pr.id
+            LEFT JOIN kategori k ON pr.kategori_id = k.id
             ORDER BY dp.tanggal DESC, dp.id DESC
         ");
         return $this->db->resultSet();
@@ -112,10 +114,12 @@ class Penjualan
                 DATE_FORMAT(dp.tanggal, '%Y-%m') as bulan,
                 DATE_FORMAT(dp.tanggal, '%M %Y') as bulan_label,
                 pr.nama_produk as varian,
+                k.nama_kategori as kategori,
                 SUM(dp.jumlah_terjual) as total
             FROM data_penjualan dp
             JOIN data_produk pr ON dp.produk_id = pr.id
-            GROUP BY bulan, bulan_label, pr.id, pr.nama_produk
+            LEFT JOIN kategori k ON pr.kategori_id = k.id
+            GROUP BY bulan, bulan_label, pr.id, pr.nama_produk, k.nama_kategori
             ORDER BY bulan ASC
         ");
         return $this->db->resultSet();

@@ -27,6 +27,41 @@ $categories = $katModel->getAllKategori();
             ?>
         <?php endif; ?>
 
+        <!-- Card Ringkasan per Kategori -->
+        <div class="row g-3 mb-4">
+            <?php 
+            $colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary'];
+            foreach ($categories as $index => $cat): 
+                $namaKat = $cat['nama_kategori'];
+                $varianCount = 0;
+                $totalStok = 0;
+                foreach ($dataProduk as $prod) {
+                    if ($prod['kategori'] === $namaKat) {
+                        $varianCount++;
+                        $totalStok += (int)$prod['stok'];
+                    }
+                }
+                $color = $colors[$index % count($colors)];
+            ?>
+                <div class="col-md-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100 card-hover" style="border-left: 4px solid var(--bs-<?php echo $color; ?>) !important;">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted small fw-semibold text-uppercase tracking-wider"><?php echo htmlspecialchars($namaKat); ?></span>
+                                <div class="bg-<?php echo $color; ?> bg-opacity-10 p-2 rounded-2 text-<?php echo $color; ?>">
+                                    <i class="bi bi-tag-fill fs-5"></i>
+                                </div>
+                            </div>
+                            <h3 class="fw-bold mb-1"><?php echo $varianCount; ?> <span class="fs-6 text-muted fw-normal">Varian</span></h3>
+                            <p class="text-muted mb-0 small">
+                                <i class="bi bi-box-seam me-1"></i> Total Stok: <strong><?php echo $totalStok; ?></strong> Pcs
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h6 class="mb-0 fw-semibold">Katalog Produk</h6>
