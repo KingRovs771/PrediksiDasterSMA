@@ -71,7 +71,7 @@ krsort($availableMonths); // Urutkan dari bulan terbaru
                                     <i class="bi bi-cart-fill fs-5"></i>
                                 </div>
                             </div>
-                            <h3 class="fw-bold mb-1"><?php echo number_format($totalTerjual, 0, ',', '.'); ?> <span class="fs-6 text-muted fw-normal">Pcs</span></h3>
+                            <h3 class="fw-bold mb-1" id="card-total-<?php echo htmlspecialchars($namaKat); ?>"><?php echo number_format($totalTerjual, 0, ',', '.'); ?> <span class="fs-6 text-muted fw-normal">Pcs</span></h3>
                             <p class="text-muted mb-0 small">
                                 <i class="bi bi-graph-up me-1"></i> Total Penjualan
                             </p>
@@ -121,7 +121,7 @@ krsort($availableMonths); // Urutkan dari bulan terbaru
                                 foreach ($dataPenjualan as $row): 
                                     $ym = substr($row['tanggal'], 0, 7);
                                 ?>
-                                    <tr class="penjualan-row" data-month="<?php echo $ym; ?>">
+                                    <tr class="penjualan-row" data-month="<?php echo $ym; ?>" data-kategori="<?php echo htmlspecialchars($row['kategori'] ?? ''); ?>" data-terjual="<?php echo (int)$row['terjual']; ?>">
                                         <td class="ps-4"><?php echo $no++; ?></td>
                                         <td><?php echo htmlspecialchars($row['bulan']); ?></td>
                                         <td><?php echo htmlspecialchars($row['tahun']); ?></td>
@@ -337,14 +337,36 @@ krsort($availableMonths); // Urutkan dari bulan terbaru
                 noMatchRow.remove();
             }
 
+            // Inisialisasi ulang total per kategori ke 0
+            const categoryTotals = {};
+            const cards = document.querySelectorAll('[id^="card-total-"]');
+            cards.forEach(card => {
+                const kat = card.id.replace('card-total-', '');
+                categoryTotals[kat] = 0;
+            });
+
             rows.forEach(row => {
                 const rowMonth = row.getAttribute('data-month');
+                const kat = row.getAttribute('data-kategori');
+                const terjual = parseInt(row.getAttribute('data-terjual') || 0);
+
                 if (selectedMonth === '' || rowMonth === selectedMonth) {
                     row.style.display = '';
                     visibleCount++;
+                    if (categoryTotals[kat] !== undefined) {
+                        categoryTotals[kat] += terjual;
+                    }
                 } else {
                     row.style.display = 'none';
                 }
+            });
+
+            // Perbarui tampilan angka di card
+            cards.forEach(card => {
+                const kat = card.id.replace('card-total-', '');
+                const total = categoryTotals[kat] || 0;
+                const formatted = new Intl.NumberFormat('id-ID').format(total);
+                card.innerHTML = `${formatted} <span class="fs-6 text-muted fw-normal">Pcs</span>`;
             });
 
             if (visibleCount === 0 && rows.length > 0) {
